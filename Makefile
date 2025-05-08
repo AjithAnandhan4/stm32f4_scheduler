@@ -1,25 +1,40 @@
-CC = arm-none-eabi-gcc
-CFLAGS = -mcpu=cortex-m4 -mthumb -c -g
-LFLAGS = -mcpu=cortex-m4 -nostdlib -mthumb -Wl,-Map=main.map -T main.ld
-all : startup.o main.o
-	$(CC) $(LFLAGS) -o main.elf main.o startup.o 
+# Compiler and flags
+CC      = arm-none-eabi-gcc
+CFLAGS  = -mcpu=cortex-m4 -mthumb -c -g -I./Inc
+LFLAGS  = -mcpu=cortex-m4 -mthumb -nostdlib -Wl,-Map=build/main.map -T main.ld
 
-startup : startup.c
-	$(CC) $(CFLAGS) startup.c
+# Sources and objects
+SRCS    = Src/startup.c Src/main.c
+OBJS    = build/startup.o build/main.o
+TARGET  = build/main.elf
 
-main : main.c
-	$(CC) $(CFLAGS) main.c
-	
+# Default target
+all: $(TARGET)
+
+# Linking
+$(TARGET): $(OBJS)
+	$(CC) $(LFLAGS) -o $@ $^
+
+# Compilation
+build/%.o: Src/%.c
+	mkdir -p build
+	$(CC) $(CFLAGS) $< -o $@
+
+# Clean build
 clean:
-	rm -f *.o *.elf *.map
-	#del /Q *.o *.elf *.map
-flash: 
-	openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "program main.elf verify reset exit"
+	rm -rf build/*
 
+
+# Flash firmware
+flash: $(TARGET)
+	openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "program $(TARGET) verify reset exit"
+
+# Debug using OpenOCD
 debug:
 	openocd -f interface/stlink.cfg -f target/stm32f4x.cfg
 
-gdb:
-	arm-none-eabi-gdb main.elf
-	
+# Launch GDB
+gdb: $(TARGET)
+	arm-none-eabi-gdb $(TARGET)
 
+.PHONY: all clean flash debug gdb
