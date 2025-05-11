@@ -46,6 +46,21 @@ D:\_AJITH_ANANDHAN\Practice Project\lowlevel_c_ practice\sample_project1> arm-no
 C:/arm-gnu-toolchain-14.2.rel1-mingw-w64-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: warning: main.elf has a LOAD segment with RWX permissions
 ```
 
+### GDB:
+```bash
+define show_faults
+  print/x fault_hfsr
+  print/x fault_cfsr
+  print/x fault_mmfar
+  print/x fault_bfar
+end
+```
+*define* <command-name> starts the custom command.
+
+You can add as many print/x (or other) lines as needed.
+
+end marks the *end* of the custom command definition.
+
 ## Makefile Cookbook:
 For more information on creating Makefiles, check out the [Makefile Cookbook](https://makefiletutorial.com/#makefile-cookbook).
 ```
@@ -116,3 +131,22 @@ Ref Doc: [OpenOCD Documentation](https://openocd.org/doc/pdf/openocd.pdf)
    ![Memory View](Pasted image 20250422170902.png)
 ```
  
+
+
+
+
+
+#Enter command mode and define your custom GDB command:
+ ```bash
+**define show_faults
+  print/x fault_hfsr
+  print/x fault_cfsr
+  print/x fault_mmfar
+  print/x fault_bfar
+end**
+```
+define <command-name> starts the custom command.
+
+You can add as many print/x (or other) lines as needed.
+
+end marks the end of the custom command definition.

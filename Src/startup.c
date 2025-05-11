@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "stm32f407xx.h"  // CMSIS header for STM32F4 series
 
 /* Symbols from linker script */
 extern uint32_t _estack;
@@ -236,4 +237,16 @@ void Default_Handler(void)
         "BKPT #0\n" // Break into debugger
       );
     while (1);
+}
+
+
+// System Initialization: Basic Clock Setup
+void SystemInit(void)
+{
+    // Configure the HSI as the system clock (16 MHz)
+    RCC->CR |= RCC_CR_HSION;   // Enable HSI oscillator
+    while (!(RCC->CR & RCC_CR_HSIRDY));  // Wait for HSI to stabilize
+    RCC->CFGR &= ~RCC_CFGR_SW;  // Set HSI as system clock
+    RCC->CFGR |= RCC_CFGR_SW_HSI;
+    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI); // Wait for system clock to switch to HSI
 }
