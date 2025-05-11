@@ -1,11 +1,13 @@
 #include <stdint.h>
 
-extern uint32_t _eStack, _startflashdataaddr, _sdatasram, _edatasram, _sbss, _ebss;
+/* Symbols from linker script */
+extern uint32_t _estack;
+extern uint32_t _etext, _sdata, _edata;
+extern uint32_t _sbss, _ebss;
+
 extern int main(void);
 extern void Reset_Handler(void);
-
-// Default handler for unused IRQs
-void Default_Handler(void);
+void Default_Handler(void);         /* Default handler for unused IRQs */
 
 // Cortex-M core exception handlers
 void NMI_Handler(void)               __attribute__((weak, alias("Default_Handler")));
@@ -103,8 +105,8 @@ void HASH_RNG_IRQHandler(void)      __attribute__((weak, alias("Default_Handler"
 void FPU_IRQHandler(void)           __attribute__((weak, alias("Default_Handler")));
 
 // Vector table with 98 entries
-void (* const vector_table[98])(void) __attribute__((section(".vectors"))) = {
-    (void (*)(void))(&_eStack),    // 0: Initial Stack Pointer
+void (* const vector_table[98])(void) __attribute__((section(".isr_vectors"))) = {
+    (void (*)(void))((uint32_t)&_estack),    // 0: Initial Stack Pointer
     Reset_Handler,                // 1: Reset
     NMI_Handler,                  // 2
     HardFault_Handler,            // 3
@@ -202,26 +204,36 @@ void (* const vector_table[98])(void) __attribute__((section(".vectors"))) = {
     FPU_IRQHandler
 };
 
+/* Reset Handler */
 void Reset_Handler(void)
 {
-    // Copy data section from Flash to SRAM
-    uint32_t *src = &_startflashdataaddr;
-    uint32_t *dest = &_sdatasram;
-    while (dest < &_edatasram) {
+    // Copy initialized data from flash to SRAM
+    uint32_t *src = &_etext;
+    uint32_t *dest = &_sdata;
+    while (dest < &_edata)
+    {
         *dest++ = *src++;
     }
 
     // Zero initialize the .bss section
     dest = &_sbss;
-    while (dest < &_ebss) {
+    while (dest < &_ebss)
+    {
         *dest++ = 0U;
     }
 
-    // Jump to main
+    // Call the application's entry point
     main();
+
+    // If main returns, loop forever
+    while (1);
 }
 
+/* Default Handler */
 void Default_Handler(void)
 {
+    __asm volatile(
+        "BKPT #0\n" // Break into debugger
+      );
     while (1);
 }

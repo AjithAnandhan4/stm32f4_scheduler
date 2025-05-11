@@ -17,7 +17,7 @@ int main(void)
 {
   int a = 10;
   while(1)
-  {
+  { 
 	  /*Do nothing*/
   }
   return 0;
