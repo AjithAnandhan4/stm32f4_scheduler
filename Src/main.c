@@ -83,12 +83,14 @@ void SysTick_Handler(void) {
     if (g_tick_cntr % 1000 == 0) // Blink every second
     {
         // Toggle LED (PD12)
-        GPIOD->ODR |= GPIO_ODR_OD12;
+        //GPIOD->ODR |= GPIO_ODR_OD12;
     }
 }
-#if 0
+
 // PendSV Handler (minimal context switch)
 __attribute__((naked)) void PendSV_Handler(void) {
+  GPIOD->ODR |= GPIO_ODR_OD12;
+  #if 1
     __asm volatile(
         "MRS r0, psp\n"             // Get current PSP
         "BIC r0, r0, #7\n"         // Ensure 8-byte alignment
@@ -134,8 +136,9 @@ __attribute__((naked)) void PendSV_Handler(void) {
         "MSR psp, r0\n"             // Restore PSP
         "BX lr\n"                   // Return from exception
     );
+    #endif
 }
-#endif
+
 
 void init_systick(void) {
     // Assuming 168 MHz system clock -> 1 ms = 168000 ticks
@@ -157,8 +160,8 @@ int main(void) {
     task1_sp = task1_stack;
 
     // Initialize task stacks
-   // init_task_stack(&task0_sp, task0);
-   // init_task_stack(&task1_sp, task1);
+   init_task_stack(&task0_sp, task0);
+   init_task_stack(&task1_sp, task1);
 
     // Initialize system clock and peripherals
     SystemInit();
@@ -183,8 +186,21 @@ int main(void) {
         "CPSIE i\n"                // Re-enable interrupts
     );
 #endif
-create_thread(task0);
-create_thread(task1);
+__asm volatile(
+  "LDR r0, =task0_sp\n"
+  "LDR r0, [r0]\n"
+  "BIC r0, r0, #7\n"         // Ensure 8-byte alignment
+  "MSR psp, r0\n"            // Set PSP to task0 stack
+  "MOVS r0, #2\n"            // CONTROL = 0x2 -> Use PSP, unprivileged mode
+  "MSR CONTROL, r0\n"
+  "ISB\n"
+  "CPSIE i\n"                // Re-enable interrupts
+  "LDR r0, =task0\n"
+  "BX r0\n"                  // Jump to task0
+);
+
+// create_thread(task0);
+// create_thread(task1);
 
     while (1) {
         // Main loop idle

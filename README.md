@@ -129,24 +129,108 @@ Ref Doc: [OpenOCD Documentation](https://openocd.org/doc/pdf/openocd.pdf)
    **Example Output:**
    ![GDB Output](Pasted image 20250422160605.png)
    ![Memory View](Pasted image 20250422170902.png)
-```
  
+ ### Final Output:
+```bash
+0x080002ac in task1 () at Src/main.c:43
+43              g_var2++;
+(gdb) c
+Continuing.
 
+Program received signal SIGINT, Interrupt.
+task0 () at Src/main.c:37
+37              g_var1++;
+(gdb) c
+Continuing.
 
+Program received signal SIGINT, Interrupt.
+task1 () at Src/main.c:43
+43              g_var2++;
+(gdb) c
+Continuing.
 
+Program received signal SIGINT, Interrupt.
+0x0800029c in task0 () at Src/main.c:37
+37              g_var1++;
+(gdb) c
+Continuing.
 
-
-#Enter command mode and define your custom GDB command:
- ```bash
-**define show_faults
-  print/x fault_hfsr
-  print/x fault_cfsr
-  print/x fault_mmfar
-  print/x fault_bfar
-end**
+Program received signal SIGINT, Interrupt.
+0x080002ac in task1 () at Src/main.c:43
+43              g_var2++;
+(gdb) c
+Continuing.
 ```
-define <command-name> starts the custom command.
 
-You can add as many print/x (or other) lines as needed.
+ Cortex-m3 manual:
+https://developer.arm.com/documentation/ddi0337/h/system-control/register-summary?lang=en
 
-end marks the end of the custom command definition.
+https://developer.arm.com/documentation/107706/0100/System-exceptions/Pended-SVC---PendSV
+
+
+**Embedded Systems Project – STM32F407 Cooperative Scheduler**  
+_Personal Project | ARM Cortex-M4, C, STM32CubeIDE, GDB, QEMU_
+
+- Developed a **bare-metal cooperative scheduler** from scratch on the STM32F407 MCU using **C and CMSIS**.
+    
+- Implemented **context switching**, task scheduling, and stack management without an RTOS.
+    
+- Debugged using **GDB, hardware watchpoints, and semihosting**, including resolving low-level faults (e.g., HardFaults).
+    
+- Verified scheduler functionality via **QEMU and STM32CubeIDE**, ensuring reliable execution of multiple tasks.
+    
+- Designed with **modular, reusable code structure**, making it extensible for preemptive scheduling.
+
+**Cooperative Task Scheduler for STM32F4**  
+_QEMU + STM32F407 + CMSIS + Bare-Metal C_
+
+- Built a lightweight cooperative task scheduler supporting multiple concurrent task loops.
+    
+- Utilized **manual stack initialization** and `__asm` for entering/exiting tasks.
+    
+- Created custom startup files and linker scripts to control memory layout.
+    
+- Integrated **semihosting via GDB** to view task context, debug stack states, and monitor variable changes.
+    
+- Tested context switching logic with QEMU; validated task isolation and cooperative switching through manual instrumentation.
+
+
+
+Next Goal:
+### ✅ Q1: What is **Tickless Idle Mode**?
+
+In a traditional RTOS, a **SysTick timer** fires periodically (e.g. every 1 ms) to update the system tick count and run the scheduler.
+
+#### 🟠 Problem with Regular Ticks:
+
+- The CPU **wakes up** every tick, even if there’s **no task to run**.
+    
+- This **wastes power**, especially in battery-operated or low-duty-cycle systems.
+    
+
+#### ✅ Solution: **Tickless Idle Mode**
+
+- When the system knows that **no task is ready** for a long period, it:
+    
+    - Disables regular tick interrupts.
+        
+    - Enters a low-power mode (e.g. `__WFI()`).
+        
+    - Configures a timer to **wake up exactly when the next task is due**.
+✅ **Where it shines:** Sleep-heavy systems like sensors, wearables, or IoT edge devices.
+
+You can simulate this even in your cooperative scheduler by:
+
+- **Tracking idle time.**
+    
+- Calling `__WFI()` when no task is scheduled.
+    
+- Using `SysTick` or a timer to wake back up.
+
+https://github.com/streetdogg/arm-rtos/blob/master/src/os.c
+
+https://github.com/ARM-software/CMSIS_5/blob/develop/CMSIS/Core/Include/mpu_armv7.h
+
+https://github.com/AjithAnandhan4/stm32f4_scheduler/commits/main/
+
+

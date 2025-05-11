@@ -4,8 +4,8 @@ CFLAGS  = -mcpu=cortex-m4 -mthumb -c -g -I./Inc
 LFLAGS  = -mcpu=cortex-m4 -mthumb -nostdlib -Wl,-Map=build/main.map -T main.ld
 
 # Sources and objects
-SRCS    = Src/startup.c Src/main.c Src/os.c
-OBJS    = build/startup.o build/main.o build/os.o
+SRCS    = Src/startup.c Src/main.c
+OBJS    = build/startup.o build/main.o
 TARGET  = build/main.elf
 
 # Default target
